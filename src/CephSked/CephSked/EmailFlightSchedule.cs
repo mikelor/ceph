@@ -21,7 +21,7 @@ using SendGrid;
 using SendGrid.Helpers.Mail;
 
 using CephSked.Models;
-
+using System.Reflection.Metadata;
 
 namespace CephSked.Automation
 {
@@ -35,25 +35,14 @@ namespace CephSked.Automation
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            Attachment a = await GetFlightSchedule(log);
-            log.LogInformation(a.Name);
-     
-            var mailMessage = new MailMessage();
-            try
-            {
-                mailMessage.Attachments.Add(a);
-                await SendEmail(mailMessage);
-            }
-            catch (Exception ex)
-            {
-                log.LogError($"Exception: {ex.Message}");
-            }
+            List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightSchedule(log);
+            await SendEmail(scheduleForDateResponses, log);
+
         }
 
-        private static async Task SendEmail(MailMessage mailMessage)
+        private static async Task SendEmail(List<FlightScheduleForDateResponse> scheduleForDateResponses, ILogger log)
         {
             var apiKey = Environment.GetEnvironmentVariable("sendGridAPIKey");
-            var sendGridTemplateId = Environment.GetEnvironmentVariable("sendGridTemplateId");
             var fromEmailAddress = Environment.GetEnvironmentVariable("fromEmailAddress");
             var fromEmailName = Environment.GetEnvironmentVariable("fromEmailName");
             var toEmailAddress = Environment.GetEnvironmentVariable("toEmailAddress");
@@ -61,9 +50,22 @@ namespace CephSked.Automation
 
             var from = new EmailAddress(fromEmailAddress, fromEmailName);
             var to = new EmailAddress(toEmailAddress, toEmailName);
-            var msg = MailHelper.CreateSingleTemplateEmail(from, to, sendGridTemplateId, mailMessage);
+            var msg = MailHelper.CreateSingleEmail(from, to, "SEA Spot Saver Flights", "Here's the File", null);
+
+
+            CsvConfiguration csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture);
+            using var ms = new MemoryStream();
+            var streamWriter = new StreamWriter(ms);
+            var csvWriter = new CsvWriter(streamWriter, csvConfig);
+            csvWriter.WriteRecords<FlightScheduleForDateResponse>(scheduleForDateResponses);
+
+            streamWriter.Flush(); // flush the buffered text to stream
+            ms.Seek(0, SeekOrigin.Begin); // reset stream position
+
+            await msg.AddAttachmentAsync("SEASpotSaverFlights.csv", ms);
             var client = new SendGridClient(apiKey);
             var response = await client.SendEmailAsync(msg);
+            log.LogInformation(response.StatusCode.ToString());
         }
 
 
@@ -71,12 +73,13 @@ namespace CephSked.Automation
         //
         // GetFlightSchedule(log)
         // Returns the Url of the latest TsaThroughputFile
-        private static async Task<Attachment> GetFlightSchedule(ILogger log)
+        private static async Task<List<FlightScheduleForDateResponse>> GetFlightSchedule(ILogger log)
         {
             Uri getTokenUri = new Uri("https://api.betterairport.com/token");
             TokenRequest tokenRequest = new TokenRequest
             {
-
+                User = Environment.GetEnvironmentVariable("BetterAirportsApiUser"),
+                Key = Environment.GetEnvironmentVariable("BetterAirportsApiKey"),
             };
 
             TokenResponse tokenResponse = await GetTokenAsync(getTokenUri, tokenRequest);
@@ -88,24 +91,7 @@ namespace CephSked.Automation
             Uri getFlightScheduleForDateUri = new Uri(String.Format("https://api.betterairport.com/forecast/scheduleFlights/{0}", flightScheduleForDateRequest.SearchDate.ToString("yyyy-MM-dd")));
             List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest);
 
-            CsvConfiguration csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var ms = new MemoryStream();
-            using var streamWriter = new StreamWriter(ms);
-            using var csvWriter = new CsvWriter(streamWriter, csvConfig);
-            csvWriter.WriteRecords<FlightScheduleForDateResponse>(scheduleForDateResponses);
-
-
-            using TextWriter tw = new StreamWriter(ms);
-            using CsvWriter csv = new CsvWriter(tw, csvConfig);
-            csv.WriteRecords(scheduleForDateResponses); // Converts error records to CSV
-
-            tw.Flush(); // flush the buffered text to stream
-            ms.Seek(0, SeekOrigin.Begin); // reset stream position
-            Attachment a = new Attachment(ms, "flightSchedule.csv");
-
-
-
-            return attachment;
+            return scheduleForDateResponses;
         }
 
         //
