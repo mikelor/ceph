@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace CephSked.Models
+namespace Ceph.Airport.Models
 {
-    class TokenRequest
+    public class TokenRequest
     {
         public string User { get; set; }
         public string Key { get; set; }

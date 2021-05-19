@@ -1,13 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CephSked.Models
+namespace Ceph.Airport.Models
 {
-    class TokenResponse
+    public class TokenResponse
     {
         [JsonPropertyName("accessToken")]
         public string AccessToken { get; set; }
+        /*
 
         [JsonPropertyName("expiresInSeconds")]
         public int ExpiresInSeconds { get; set; }
+        */
     }
 }
