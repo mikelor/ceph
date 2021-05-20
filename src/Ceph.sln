@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31025.218
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CephSked", "CephSked\CephSked.csproj", "{6491E902-5252-4106-92DE-CA8C9910C265}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ceph.Airport", "Ceph.Airport\Ceph.Airport.csproj", "{BFEAFFE5-DD0E-47FA-B74A-7EDAFC465D91}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CephCon", "CephCon\CephCon.csproj", "{23C552E9-5B6E-4E5C-A0FF-0F0F77014DD8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6491E902-5252-4106-92DE-CA8C9910C265}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6491E902-5252-4106-92DE-CA8C9910C265}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6491E902-5252-4106-92DE-CA8C9910C265}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6491E902-5252-4106-92DE-CA8C9910C265}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFEAFFE5-DD0E-47FA-B74A-7EDAFC465D91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFEAFFE5-DD0E-47FA-B74A-7EDAFC465D91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFEAFFE5-DD0E-47FA-B74A-7EDAFC465D91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFEAFFE5-DD0E-47FA-B74A-7EDAFC465D91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23C552E9-5B6E-4E5C-A0FF-0F0F77014DD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23C552E9-5B6E-4E5C-A0FF-0F0F77014DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23C552E9-5B6E-4E5C-A0FF-0F0F77014DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23C552E9-5B6E-4E5C-A0FF-0F0F77014DD8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {85333C27-432F-49E0-AD7F-23E5CBE64260}
+	EndGlobalSection
+EndGlobal

@@ -20,10 +20,10 @@ namespace CephSked.Automation
  
 
         [FunctionName("EmailFlightSchedule")]
-        public static async Task Run([TimerTrigger("15 13 * * *")] TimerInfo myTimer, ILogger log)
+        public static async Task Run([TimerTrigger("00 15 * * *")] TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
-            DateTime searchDate = DateTime.Now.AddDays(1);
+            DateTime searchDate = DateTime.Now.AddDays(2);
             log.LogInformation($"Flight Schedule for : {searchDate.ToShortDateString()}.");
 
             List<FlightScheduleForDateResponse> scheduleForDateResponses = await FlightSchedule.GetFlightScheduleAsync(_httpClient, searchDate, log);
