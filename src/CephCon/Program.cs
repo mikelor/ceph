@@ -31,7 +31,7 @@ namespace CephCon
 
 
             log.LogInformation($"Current Run Time: {DateTime.Now}");
-            DateTime searchDate = DateTime.Now.AddDays(1);
+            DateTime searchDate = DateTime.Now.AddDays(2);
             log.LogInformation($"Flight Schedule for : {searchDate.ToShortDateString()}.");
 
 

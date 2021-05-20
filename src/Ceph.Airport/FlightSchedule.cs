@@ -43,11 +43,21 @@ namespace Ceph.Airport
                  SearchDate = searchDate
             };
             Uri getFlightScheduleForDateUri = new Uri(String.Format("https://api.betterairport.com/forecast/scheduleFlights/{0}", flightScheduleForDateRequest.SearchDate.ToString("yyyy-MM-dd")));
+
+            List<FlightScheduleForDateResponse> vqEligibleFlights = new List<FlightScheduleForDateResponse>();
             List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(httpClient, tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest);
+            foreach(FlightScheduleForDateResponse f in scheduleForDateResponses)
+            {
+                if(f.Fields[4].Name.Equals("VQ") && f.Fields[4].Value.Equals("VQ-5"))
+                {
+                    vqEligibleFlights.Add(f);
+                }
+            }
 
             log.LogInformation($"{scheduleForDateResponses.Count} Flights Retrieved for {searchDate.ToShortDateString()}.");
+            log.LogInformation($"{vqEligibleFlights.Count} are eligible for Virtual Queuing.");
 
-            return scheduleForDateResponses;
+            return vqEligibleFlights;
         }
 
         //
@@ -117,12 +127,23 @@ namespace Ceph.Airport
             var apiKey = Environment.GetEnvironmentVariable("sendGridApiKey");
             var fromEmailAddress = Environment.GetEnvironmentVariable("fromEmailAddress");
             var fromEmailName = Environment.GetEnvironmentVariable("fromEmailName");
-            var toEmailAddress = Environment.GetEnvironmentVariable("toEmailAddress");
-            var toEmailName = Environment.GetEnvironmentVariable("toEmailName");
 
             var from = new EmailAddress(fromEmailAddress, fromEmailName);
-            var to = new EmailAddress(toEmailAddress, toEmailName);
-            var msg = MailHelper.CreateSingleEmail(from, to, $"SEA Spot Saver Flights for {searchDate.ToShortDateString()}", $"The attached file contains all scheduled flights for {searchDate.ToShortDateString()}.", null);
+
+            // Add
+            List<EmailAddress> addresses = new List<EmailAddress>();
+            addresses.Add(new EmailAddress(
+                Environment.GetEnvironmentVariable("toEmailListAddress1"),
+                Environment.GetEnvironmentVariable("toEmailListName1")));
+
+            addresses.Add(new EmailAddress(
+                Environment.GetEnvironmentVariable("toEmailListAddress2"),
+                Environment.GetEnvironmentVariable("toEmailListName2"))); 
+
+
+            var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, addresses, 
+                $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
+                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}", null);
 
             // Create the CSV File for the attachment.
             CsvConfiguration csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture);
@@ -134,9 +155,9 @@ namespace Ceph.Airport
             streamWriter.Flush(); // flush the buffered text to stream
             ms.Seek(0, SeekOrigin.Begin); // reset stream position
 
-            await msg.AddAttachmentAsync($"{searchDate.ToShortDateString()}SEASpotSaverFlights.csv", ms);
+            await multimsg.AddAttachmentAsync($"{searchDate.ToShortDateString()}SEASpotSaverFlights.csv", ms);
             var client = new SendGridClient(apiKey);
-            var response = await client.SendEmailAsync(msg);
+            var response = await client.SendEmailAsync(multimsg);
             log.LogInformation(response.StatusCode.ToString());
         }
     }
