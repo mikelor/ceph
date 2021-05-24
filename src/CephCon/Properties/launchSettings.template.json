@@ -1,0 +1,22 @@
+{
+  "profiles": {
+    "CephCon": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "BetterAirportsApiUser": "<Better Airport API User>",
+        "BetterAirportsApiKey": "<Better Aiprot API Key>",
+        "sendGridApiKey": "<SendGrid API Key>",
+        "fromEmailAddress": "<from.user@example.com>",
+        "fromEmailName": "<From User>",
+        "toEmailListAddress1": "<to.user1@example.com>",
+        "toEmailListName1": "<To User1>",
+        "toEmailListAddress2": "<to.user1@example.com>",
+        "toEmailListName2": "<To User1>",
+        "toEmailListAddress3": "<to.user1@example.com>",
+        "toEmailListName3": "<To User1>",
+        "toEmailListAddress4": "<to.user1@example.com>",
+        "toEmailListName4": "<To User1>"
+      }
+    }
+  }
+}
