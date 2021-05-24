@@ -1,5 +1,5 @@
 # ceph
-This repository contains three projects that utilize [Copenhagen Optimization](https://copenhagenoptimization.com/)'s [Better Airport](https://api.betterairport.com) APIs, to send emails containing a flightschedule as an attached csv file.
+This repository contains three projects that utilize [Copenhagen Optimization](https://copenhagenoptimization.com/)'s [Better Airport](https://api.betterairport.com) APIs, to send emails using [Twilio's SendGrid Service](https://sendgrid.com/docs/api-reference/) containing a flightschedule as an attached csv file created with [CSVHelper](https://www.nuget.org/packages/CsvHelper/).
   1. [/src/CephSked](src/CephSked) - an Azure Timer Trigger Function that runs on a default schedule of once per day at 15:00 based on the timezone of the Azure Function Configuration.
   2. [/src/CephCon](src/CephCon) - a console application that can be run from the command line.
   3. [/src/Ceph.Airport](src/Ceph.Airport) - a class library that performs all of the business logic.
