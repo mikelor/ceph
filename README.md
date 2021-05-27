@@ -9,7 +9,7 @@ The following diagram illustrates how each of these work together
 ![System Component Diagram](doc/ceph.png)
 
 ## A little more about Ceph.Airport
-The bulk of the business flow (of which there is little), is contained in the **GetFlightScheduleAsync** method in [FlightSchedule.cs](https://github.com/mikelor/ceph/blob/main/src/Ceph.Airport/FlightSchedule.cs). This method retrieves the flight schedule from the BetterAirport API for a specific date, formats it as a CSV file using CSVHelper, and emails it to multiple recipients using Twilio's SendGrid API.
+The bulk of the business flow (of which there is little), is contained in the **GetFlightScheduleAsync** method in [FlightSchedule.cs](https://github.com/mikelor/ceph/blob/main/src/Ceph.Airport/FlightSchedule.cs). This method retrieves the flight schedule from the BetterAirport API for a specific date, formats it as a CSV file using CSVHelper, and emails it to multiple recipients in **SendMailAsync** using Twilio's SendGrid API.
 
 ## Getting Up And Running
 Open the .sln in visual studio and set your startup project to CephCon. Before building and running, You will need to:
