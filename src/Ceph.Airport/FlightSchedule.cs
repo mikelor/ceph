@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -12,10 +13,13 @@ using CsvHelper.Configuration;
 
 using Microsoft.Extensions.Logging;
 
+using Polly.Extensions.Http;
+
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
 using Ceph.Airport.Models;
+
 
 namespace Ceph.Airport
 {
@@ -35,7 +39,7 @@ namespace Ceph.Airport
                 User = Environment.GetEnvironmentVariable("BetterAirportsApiUser"),
                 Key = Environment.GetEnvironmentVariable("BetterAirportsApiKey"),
             };
-            TokenResponse tokenResponse = await GetTokenAsync(httpClient, getTokenUri, tokenRequest);
+            TokenResponse tokenResponse = await GetTokenAsync(httpClient, getTokenUri, tokenRequest, log);
 
             // Get Flight Schedule for Search Date
             FlightScheduleForDateRequest flightScheduleForDateRequest = new FlightScheduleForDateRequest
@@ -45,7 +49,7 @@ namespace Ceph.Airport
             Uri getFlightScheduleForDateUri = new Uri(String.Format("https://api.betterairport.com/forecast/scheduleFlights/{0}", flightScheduleForDateRequest.SearchDate.ToString("yyyy-MM-dd")));
 
             List<FlightScheduleForDateResponse> vqEligibleFlights = new List<FlightScheduleForDateResponse>();
-            List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(httpClient, tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest);
+            List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(httpClient, tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest, log);
             foreach(FlightScheduleForDateResponse f in scheduleForDateResponses)
             {
                 if(f.Fields[4].Name.Equals("VQ") && f.Fields[4].Value.Equals("VQ-5"))
@@ -63,7 +67,7 @@ namespace Ceph.Airport
         //
         // GetTokenAsync
         // Authenticates against the BetterAirports Api
-        public static async Task<TokenResponse> GetTokenAsync(HttpClient httpClient, Uri getTokenUri, TokenRequest tokenRequest)
+        public static async Task<TokenResponse> GetTokenAsync(HttpClient httpClient, Uri getTokenUri, TokenRequest tokenRequest, ILogger log)
         {
 
             using var request = new HttpRequestMessage(HttpMethod.Get, getTokenUri);
@@ -72,7 +76,14 @@ namespace Ceph.Airport
             request.Headers.TryAddWithoutValidation("x-api-key", tokenRequest.Key);
 
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch(Exception e)
+            {
+                log.LogInformation($"GetTokenAsync() Failure: {e.Message}");
+            }
 
             var responseStream = await response.Content.ReadAsStreamAsync();
 
@@ -93,7 +104,7 @@ namespace Ceph.Airport
         //
         // GetFlightScheduleForDateAsync
         // Returns a the Flight Schedule for the Date
-        public static async Task<List<FlightScheduleForDateResponse>> GetFlightScheduleForDateAsync(HttpClient httpClient, TokenResponse tokenResponse, Uri getFlightScheduleForDateUri, FlightScheduleForDateRequest flightScheduleForDateRequest)
+        public static async Task<List<FlightScheduleForDateResponse>> GetFlightScheduleForDateAsync(HttpClient httpClient, TokenResponse tokenResponse, Uri getFlightScheduleForDateUri, FlightScheduleForDateRequest flightScheduleForDateRequest, ILogger log)
         {
 
             using var request = new HttpRequestMessage(HttpMethod.Get, getFlightScheduleForDateUri);
@@ -101,6 +112,15 @@ namespace Ceph.Airport
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
             using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
+
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception e)
+            {
+                log.LogInformation($"GetFlightScheduleForDateAsync() Failure: {e.Message}");
+            }
             response.EnsureSuccessStatusCode();
 
             using var responseStream = await response.Content.ReadAsStreamAsync();
@@ -125,43 +145,37 @@ namespace Ceph.Airport
         public static async Task SendEmailAsync(List<FlightScheduleForDateResponse> scheduleForDateResponses, DateTime searchDate, ILogger log)
         {
             var apiKey = Environment.GetEnvironmentVariable("sendGridApiKey");
-            var fromEmailAddress = Environment.GetEnvironmentVariable("fromEmailAddress");
-            var fromEmailName = Environment.GetEnvironmentVariable("fromEmailName");
+            var fromEmailAddress = Environment.GetEnvironmentVariable("fromAddress");
+            var fromEmailName = Environment.GetEnvironmentVariable("fromName");
 
             var from = new EmailAddress(fromEmailAddress, fromEmailName);
 
-            // Add
-            List<EmailAddress> addresses = new List<EmailAddress>();
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress1"),
-                Environment.GetEnvironmentVariable("toEmailListName1")));
+            // Send to One or more Emails
+            List<EmailAddress> toAddresses = new List<EmailAddress>();
+            List<String> toAddressList = Environment.GetEnvironmentVariable("toAddressList").Split(',').ToList();
+            List<String> toNameList = Environment.GetEnvironmentVariable("toNameList").Split(',').ToList();
 
-            
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress2"),
-                Environment.GetEnvironmentVariable("toEmailListName2")));
+            // Create a Tuple so we don't have to iterate through the lists twice
+            foreach (var toAddress in toAddressList.Zip(toNameList, Tuple.Create))
+            {
+                toAddresses.Add(new EmailAddress(toAddress.Item1, toAddress.Item2));
+            }
 
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress3"),
-                Environment.GetEnvironmentVariable("toEmailListName3")));
-
-
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress4"),
-                Environment.GetEnvironmentVariable("toEmailListName4")));
-
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress5"),
-                Environment.GetEnvironmentVariable("toEmailListName5")));
-
-
-            addresses.Add(new EmailAddress(
-                Environment.GetEnvironmentVariable("toEmailListAddress6"),
-                Environment.GetEnvironmentVariable("toEmailListName6")));
-
-            var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, addresses, 
+            var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, toAddresses, 
                 $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
-                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}", null);
+                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.1", null);
+
+            // Add CCs
+            List<EmailAddress> ccAddresses = new List<EmailAddress>();
+            List<String> ccAddressList = Environment.GetEnvironmentVariable("ccAddressList").Split(',').ToList();
+            List<String> ccNameList = Environment.GetEnvironmentVariable("ccNameList").Split(',').ToList();
+
+            // Create a Tuple so we don't have to iterate through the lists twice
+            foreach (var ccAddress in ccAddressList.Zip(ccNameList, Tuple.Create))
+            {
+                ccAddresses.Add(new EmailAddress(ccAddress.Item1, ccAddress.Item2));
+            }
+            multimsg.AddCcs(ccAddresses);
 
             // Create the CSV File for the attachment.
             CsvConfiguration csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture);

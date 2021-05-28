@@ -7,15 +7,9 @@
         "BetterAirportsApiKey": "<Better Aiprot API Key>",
         "sendGridApiKey": "<SendGrid API Key>",
         "fromEmailAddress": "<from.user@example.com>",
-        "fromEmailName": "<From User>",
-        "toEmailListAddress1": "<to.user1@example.com>",
-        "toEmailListName1": "<To User1>",
-        "toEmailListAddress2": "<to.user1@example.com>",
-        "toEmailListName2": "<To User1>",
-        "toEmailListAddress3": "<to.user1@example.com>",
-        "toEmailListName3": "<To User1>",
-        "toEmailListAddress4": "<to.user1@example.com>",
-        "toEmailListName4": "<To User1>"
+        "fromEmailName": "From User",
+        "toEmailAddressList": "user1@example.com, user2@example.com",
+        "toEmailNameList": "User1FirstName User1LastName, User2FirstName User2LastName"
       }
     }
   }
