@@ -150,6 +150,14 @@ namespace Ceph.Airport
                 Environment.GetEnvironmentVariable("toEmailListAddress4"),
                 Environment.GetEnvironmentVariable("toEmailListName4")));
 
+            addresses.Add(new EmailAddress(
+                Environment.GetEnvironmentVariable("toEmailListAddress5"),
+                Environment.GetEnvironmentVariable("toEmailListName5")));
+
+
+            addresses.Add(new EmailAddress(
+                Environment.GetEnvironmentVariable("toEmailListAddress6"),
+                Environment.GetEnvironmentVariable("toEmailListName6")));
 
             var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, addresses, 
                 $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
