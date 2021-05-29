@@ -13,8 +13,6 @@ using CsvHelper.Configuration;
 
 using Microsoft.Extensions.Logging;
 
-using Polly.Extensions.Http;
-
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -83,6 +81,7 @@ namespace Ceph.Airport
             catch(Exception e)
             {
                 log.LogInformation($"GetTokenAsync() Failure: {e.Message}");
+                throw e;
             }
 
             var responseStream = await response.Content.ReadAsStreamAsync();
@@ -120,8 +119,8 @@ namespace Ceph.Airport
             catch (Exception e)
             {
                 log.LogInformation($"GetFlightScheduleForDateAsync() Failure: {e.Message}");
+                throw e;
             }
-            response.EnsureSuccessStatusCode();
 
             using var responseStream = await response.Content.ReadAsStreamAsync();
 
@@ -190,7 +189,8 @@ namespace Ceph.Airport
             await multimsg.AddAttachmentAsync($"{searchDate.ToShortDateString()}SEASpotSaverFlights.csv", ms);
             var client = new SendGridClient(apiKey);
             var response = await client.SendEmailAsync(multimsg);
-            log.LogInformation(response.StatusCode.ToString());
+
+            log.LogInformation($"SendEmailAsync() - Response Code:{response.StatusCode}");
         }
     }
 }
