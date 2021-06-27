@@ -48,11 +48,16 @@ namespace Ceph.Airport
 
             List<FlightScheduleForDateResponse> vqEligibleFlights = new List<FlightScheduleForDateResponse>();
             List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(httpClient, tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest, log);
-            foreach(FlightScheduleForDateResponse f in scheduleForDateResponses)
+            foreach(FlightScheduleForDateResponse flight in scheduleForDateResponses)
             {
-                if(f.Fields[4].Name.Equals("VQ") && f.Fields[4].Value.Equals("VQ-5"))
+                // TODO: Could probably do a Find Predicate
+                foreach (Field f in flight.Fields)
                 {
-                    vqEligibleFlights.Add(f);
+                    if (f.Name.Equals("VQ") && f.Value.Equals("VQ-5"))
+                    {
+                        vqEligibleFlights.Add(flight);
+                        break;
+                    }
                 }
             }
 
