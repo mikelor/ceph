@@ -53,7 +53,7 @@ namespace Ceph.Airport
                 // TODO: Could probably do a Find Predicate
                 foreach (Field f in flight.Fields)
                 {
-                    if (f.Name.Equals("VQ") && f.Value.Equals("VQ-5"))
+                    if (f.Name.Equals("VQ") && f.Value.Equals("VQ-5 VQ-3"))
                     {
                         vqEligibleFlights.Add(flight);
                         break;
@@ -167,7 +167,7 @@ namespace Ceph.Airport
 
             var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, toAddresses, 
                 $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
-                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.1", null);
+                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.2", null);
 
             // Add CCs
             List<EmailAddress> ccAddresses = new List<EmailAddress>();
