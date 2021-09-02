@@ -50,13 +50,17 @@ namespace Ceph.Airport
             List<FlightScheduleForDateResponse> scheduleForDateResponses = await GetFlightScheduleForDateAsync(httpClient, tokenResponse, getFlightScheduleForDateUri, flightScheduleForDateRequest, log);
             foreach(FlightScheduleForDateResponse flight in scheduleForDateResponses)
             {
-                // TODO: Could probably do a Find Predicate
-                foreach (Field f in flight.Fields)
+                // TODO: Use LINQ
+                if (flight.AirlineIata.Equals("AS"))
                 {
-                    if (f.Name.Equals("VQ") && f.Value.Equals("VQ-5 VQ-3"))
+                    // TODO: Could probably do a Find Predicate
+                    foreach (Field f in flight.Fields)
                     {
-                        vqEligibleFlights.Add(flight);
-                        break;
+                        if (f.Name.Equals("VQ") && f.Value.Contains("VQ-5"))
+                        {
+                            vqEligibleFlights.Add(flight);
+                            break;
+                        }
                     }
                 }
             }
@@ -167,7 +171,7 @@ namespace Ceph.Airport
 
             var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, toAddresses, 
                 $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
-                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.2", null);
+                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.3", null);
 
             // Add CCs
             List<EmailAddress> ccAddresses = new List<EmailAddress>();
