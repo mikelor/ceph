@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Microsoft.Azure.WebJobs;
@@ -26,9 +27,24 @@ namespace CephSked.Automation
             DateTime searchDate = DateTime.Now.AddDays(2);
             log.LogInformation($"Flight Schedule for : {searchDate.ToShortDateString()}.");
 
-            List<FlightScheduleForDateResponse> scheduleForDateResponses = await FlightSchedule.GetFlightScheduleAsync(_httpClient, searchDate, log);
- 
-            await FlightSchedule.SendEmailAsync(scheduleForDateResponses, searchDate, log);
+            List<String> airportList = Environment.GetEnvironmentVariable("airportList").Split('-').ToList();
+            List<Airport> airports = new List<Airport>();
+            foreach (string airportItem in airportList)
+            {
+                airports.Add(JsonSerializer.Deserialize<Airport>(airportItem));
+            }
+
+            foreach (Airport airport in airports)
+            {
+
+                List<FlightScheduleForDateResponse> scheduleForDateResponses = await FlightSchedule.GetFlightScheduleAsync(_httpClient, airport, searchDate, log);
+
+                // Send the email if we have flights
+                if (scheduleForDateResponses.Count > 0)
+                    await FlightSchedule.SendEmailAsync(scheduleForDateResponses, airport, searchDate, log);
+
+                log.LogInformation($"{airport.Code} : {searchDate.ToShortDateString()} - {scheduleForDateResponses.Count} Flights Eligible.");
+            }
 
         }
     }

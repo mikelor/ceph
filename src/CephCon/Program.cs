@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
@@ -34,12 +36,24 @@ namespace CephCon
             DateTime searchDate = DateTime.Now.AddDays(2);
             log.LogInformation($"Flight Schedule for : {searchDate.ToShortDateString()}.");
 
+            List<String> airportList = Environment.GetEnvironmentVariable("airportList").Split('-').ToList();
+            List<Airport> airports = new List<Airport>();
+            foreach(string airportItem in airportList)
+            {
+                airports.Add(JsonSerializer.Deserialize<Airport>(airportItem));
+            }
 
-            // Get the Flight Schedule for 
-            List<FlightScheduleForDateResponse> scheduleForDateResponses =  await FlightSchedule.GetFlightScheduleAsync(_httpClient, searchDate, log);
+            foreach (Airport airport in airports)
+            {
+                // Get the Flight Schedule for 
+                List<FlightScheduleForDateResponse> scheduleForDateResponses = await FlightSchedule.GetFlightScheduleAsync(_httpClient, airport, searchDate, log);
 
-            // Send the email
-            await FlightSchedule.SendEmailAsync(scheduleForDateResponses, searchDate, log);
+                // Send the email if we have flights
+                if(scheduleForDateResponses.Count > 0)
+                    await FlightSchedule.SendEmailAsync(scheduleForDateResponses, airport, searchDate, log);
+
+                log.LogInformation($"{airport.Code} : {searchDate.ToShortDateString()} - {scheduleForDateResponses.Count} Flights Eligible.");
+            }
 
         }
     }

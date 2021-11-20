@@ -28,14 +28,14 @@ namespace Ceph.Airport
         //
         // GetFlightScheduleAsync
         // Returns the Url of the latest TsaThroughputFile
-        public static async Task<List<FlightScheduleForDateResponse>> GetFlightScheduleAsync(HttpClient httpClient, DateTime searchDate, ILogger log)
+        public static async Task<List<FlightScheduleForDateResponse>> GetFlightScheduleAsync(HttpClient httpClient, Ceph.Airport.Models.Airport airport, DateTime searchDate, ILogger log)
         {
             // Authenticate against the Api
             Uri getTokenUri = new Uri("https://api.betterairport.com/token");
             TokenRequest tokenRequest = new TokenRequest
             {
-                User = Environment.GetEnvironmentVariable("BetterAirportsApiUser"),
-                Key = Environment.GetEnvironmentVariable("BetterAirportsApiKey"),
+                User = Environment.GetEnvironmentVariable($"{airport.Code}BetterAirportsApiUser"),
+                Key = Environment.GetEnvironmentVariable($"{airport.Code}BetterAirportsApiKey"),
             };
             TokenResponse tokenResponse = await GetTokenAsync(httpClient, getTokenUri, tokenRequest, log);
 
@@ -51,12 +51,12 @@ namespace Ceph.Airport
             foreach(FlightScheduleForDateResponse flight in scheduleForDateResponses)
             {
                 // TODO: Use LINQ
-                if (flight.AirlineIata.Equals("AS"))
+                if (flight.AirlineIata.Equals("AS") && (flight.ScheduleTime.Hour >= airport.MinHour) && flight.ScheduleTime.Hour < airport.MaxHour)
                 {
                     // TODO: Could probably do a Find Predicate
                     foreach (Field f in flight.Fields)
                     {
-                        if (f.Name.Equals("VQ") && f.Value.Contains("VQ-5"))
+                        if (f.Name.Equals("VQ") && f.Value.Contains("VQ"))
                         {
                             vqEligibleFlights.Add(flight);
                             break;
@@ -150,7 +150,7 @@ namespace Ceph.Airport
         //
         // SendEmailAsync
         // Sends the Flight Schedule as an attachment
-        public static async Task SendEmailAsync(List<FlightScheduleForDateResponse> scheduleForDateResponses, DateTime searchDate, ILogger log)
+        public static async Task SendEmailAsync(List<FlightScheduleForDateResponse> scheduleForDateResponses, Ceph.Airport.Models.Airport airport, DateTime searchDate, ILogger log)
         {
             var apiKey = Environment.GetEnvironmentVariable("sendGridApiKey");
             var fromEmailAddress = Environment.GetEnvironmentVariable("fromAddress");
@@ -170,8 +170,8 @@ namespace Ceph.Airport
             }
 
             var multimsg = MailHelper.CreateSingleEmailToMultipleRecipients(from, toAddresses, 
-                $"{scheduleForDateResponses.Count} SEA Spot Saver Flights for {searchDate.ToShortDateString()}", 
-                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for SEA Spot Saver on {searchDate.ToShortDateString()}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.0.3", null);
+                $"{scheduleForDateResponses.Count} {airport.Code} Spot Saver Flights for {searchDate.ToShortDateString()}", 
+                $"The attached file contains {scheduleForDateResponses.Count} flights that are eligible for {airport.Code} Spot Saver on {searchDate.ToShortDateString()} between the hours of {airport.MinHour} and {airport.MaxHour}.\nThis file was generated at {DateTime.Now}, by Ceph - Version 1.1.0", null);
 
             // Add CCs
             List<EmailAddress> ccAddresses = new List<EmailAddress>();
@@ -195,7 +195,7 @@ namespace Ceph.Airport
             streamWriter.Flush(); // flush the buffered text to stream
             ms.Seek(0, SeekOrigin.Begin); // reset stream position
 
-            await multimsg.AddAttachmentAsync($"{searchDate.ToShortDateString()}SEASpotSaverFlights.csv", ms);
+            await multimsg.AddAttachmentAsync($"{searchDate.ToShortDateString()}{airport.Code}SpotSaverFlights.csv", ms);
             var client = new SendGridClient(apiKey);
             var response = await client.SendEmailAsync(multimsg);
 
