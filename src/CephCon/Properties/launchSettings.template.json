@@ -3,13 +3,18 @@
     "CephCon": {
       "commandName": "Project",
       "environmentVariables": {
-        "BetterAirportsApiUser": "<Better Airport API User>",
-        "BetterAirportsApiKey": "<Better Aiprot API Key>",
+        "airportList": "{\"Code\": \"EWR\", \"MinHour\": 0, \"MaxHour\": 24}-{\"Code\": \"SEA\", \"MinHour\": 9, \"MaxHour\": 11}",
+        "SEABetterAirportsApiUser": "<Better Airport API User>",
+        "SEABetterAirportsApiKey": "<Better Aiprot API Key>",
+        "EWRBetterAirportsApiUser": "<Better Airport API User>",
+        "EWRBetterAirportsApiKey": "<Better Aiprot API Key>",
         "sendGridApiKey": "<SendGrid API Key>",
-        "fromEmailAddress": "<from.user@example.com>",
-        "fromEmailName": "From User",
-        "toEmailAddressList": "user1@example.com, user2@example.com",
-        "toEmailNameList": "User1FirstName User1LastName, User2FirstName User2LastName"
+        "fromAddress": "<from.user@example.com>",
+        "fromName": "From User",
+        "toAddressList": "user1@example.com, user2@example.com",
+        "toNameList": "User1FirstName User1LastName, User2FirstName User2LastName",
+        "ccAddressList": "user1@example.com, user2@example.com",
+        "ccNameList": "User1FirstName User1LastName, User2FirstName User2LastName"
       }
     }
   }
